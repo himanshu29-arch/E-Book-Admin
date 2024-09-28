@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 use Illuminate\Support\Facades\Storage;
+use App\Models\User;
 use Hash;
 use File;
 
@@ -94,4 +96,75 @@ class ProfileController extends Controller
         ],200);
 
     }
+
+    public function delete_account(Request $request)
+    {
+        // Check if the token is provided
+        $token = $request->bearerToken();
+        if (!$token) {
+            return response()->json([
+                'message' => 'Please provide a token',
+            ], 400);
+        }
+
+        // Attempt to find the token in the database
+        $tokenData = PersonalAccessToken::findToken($token);
+        
+        // If the token is invalid, return an error
+        if (!$tokenData) {
+            return response()->json([
+                'message' => 'Invalid token',
+            ], 401);
+        }
+
+        // Get the user associated with the token
+        $user = User::find($tokenData->tokenable_id);
+
+        // Check if the user is found
+        if (!$user) {
+            return response()->json([
+                'message' => 'No user found',
+            ], 404);
+        }
+
+        // Delete the profile image from S3 if it exists
+        if ($user->profile_image) {
+            $imagePath = parse_url($user->profile_image, PHP_URL_PATH);
+            Storage::disk('s3')->delete($imagePath);
+        }
+
+        // Delete the user account
+        $user->delete();
+
+        // Revoke the token so it can't be used again
+        $tokenData->delete();
+
+        return response()->json([
+            'message' => 'Account successfully deleted',
+        ], 200);
+    }
+    public function delete_account_user($userId) {
+        // Find the user by ID
+        $user = User::find($userId);
+    
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found',
+            ], 404);
+        }
+    
+        // Delete the profile image from S3 if it exists
+        if ($user->profile_image) {
+            $imagePath = parse_url($user->profile_image, PHP_URL_PATH);
+            Storage::disk('s3')->delete($imagePath);
+        }
+    
+        // Delete the user account
+        $user->delete();
+    
+        return response()->json([
+            'message' => 'Account successfully deleted',
+        ], 200);
+    }
+    
 }

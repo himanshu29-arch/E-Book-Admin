@@ -13,7 +13,8 @@ axios.defaults.headers.common["X-CSRF-TOKEN"] = document
     .getAttribute("content");
 
 // const api = "http://127.0.0.1:8000";
-const api = "http://43.204.161.117"
+// const api = "http://43.204.161.117"
+const api = "https://admin.sohojpora.com"
 function App() {
     const [numPages, setNumPages] = useState(null);
     const [pageNumber, setPageNumber] = useState(1);
@@ -175,7 +176,7 @@ function App() {
         page.drawRectangle({
             x,
             y: y - 4,
-            width: 120,
+            width: 80, //120
             height: 24,
             color: rgb(1, 1, 1),
         });
